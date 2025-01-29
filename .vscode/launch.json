@@ -5,7 +5,8 @@
             "name": "(lldb-mac) Launch",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceFolder}/build/subprojects/Build/wx_cmake_template_core/main.app",
+            "program": "${workspaceFolder}\\build\\subprojects\\Build\\wx_cmake_template_core\\Debug\\main.exe",
+            //"program": "${workspaceFolder}/build/subprojects/Build/wx_cmake_template_core/main.app",
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Build with CMake"
         },
@@ -19,7 +20,8 @@
         },
         {
             "name": "(msvc) Launch",
-            "type": "cppvsdbg",
+            "type": "lldb",
+            //"type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}\\build\\subprojects\\Build\\wx_cmake_template_core\\Debug\\main.exe",
             "cwd": "${workspaceFolder}",

@@ -2,11 +2,13 @@
 #include <algorithm>
 #include <cmath>
 
-void ShapeChecker::CheckClickedShape(const wxPoint &clickedPoint, std::vector<DrawingCanvas::DrawRecord> &drawOrder, std::vector<DrawingCanvas::ShapeData> &shapes, const wxColour &color, DrawingCanvas *canvas)
+void ShapeChecker::CheckClickedShape(const wxPoint &clickedPoint, std::vector<DrawingCanvas::DrawRecord> &drawOrder, std::vector<DrawingCanvas::ShapeData> &shapes, const wxColour &color, DrawingCanvas *canvas, std::vector<DrawingCanvas::bgcolorstruct> &backcolor)
 {
     // Iterate over the draw order in reverse to check the topmost shape first
     // for (auto it = drawOrder.rbegin(); it != drawOrder.rend(); ++it)
     bool shapefound = false;
+    // undoStack.push_back({drawOrder, canvas->GetBackgroundColour(), false});
+
     for (int i = 0; i < drawOrder.size(); i++)
     {
         // const auto &record = *it;
@@ -26,15 +28,71 @@ void ShapeChecker::CheckClickedShape(const wxPoint &clickedPoint, std::vector<Dr
             {
                 // return &shapes[record.index];
 
-                shape.fillcolor = color;
+                // wxLogMessage("size:%zu", drawOrder.size());
+
+                int oldIndex = record.index;
+                DrawingCanvas::ShapeData newShape;
+                // wxLogMessage("inside shapechecker");
+
+                shapes.push_back(newShape);
+                shapes.back().shapeType = "Square";
+                // newShape.startPoint = shapeStartPoint;
+                shapes.back().startPoint = shapes[oldIndex].startPoint;
+
+                shapes.back().endPoint = shapes[oldIndex].endPoint;
+                // newShape.endPoint.x += 100;
+                // newShape.endPoint.y += 0;
+                shapes.back().color = shapes[oldIndex].color;
+                shapes.back().size = shapes[oldIndex].size;
+
+                shapes.back().penTyp = shapes[oldIndex].penTyp;
+                shapes.back().fillshape = true;
+
+                shapes.back().fillcolor = color;
+
+                // shapes.push_back(newShape);
+
+                drawOrder.push_back({DrawingCanvas::DrawRecord::Shape, shapes.size() - 1});
+
+                // wxLogMessage("size:%zu", drawOrder.size());
+
+                // shape.fillcolor = color;
+                // shape.fillshape = true;
                 shapefound = true;
+
+                // wxLogMessage("inside shapechecker");
+
                 // wxLogMessage("inside square");
                 break;
             }
             else if (shape.shapeType == "Circle" && IsPointInCircle(clickedPoint, shape.startPoint, shape.endPoint))
             {
                 // return &shapes[record.index];
-                shape.fillcolor = color;
+
+                int oldIndex = record.index;
+                DrawingCanvas::ShapeData newShape;
+                // wxLogMessage("inside shapechecker");
+
+                shapes.push_back(newShape);
+                shapes.back().shapeType = "Circle";
+                // newShape.startPoint = shapeStartPoint;
+                shapes.back().startPoint = shapes[oldIndex].startPoint;
+
+                shapes.back().endPoint = shapes[oldIndex].endPoint;
+                // newShape.endPoint.x += 100;
+                // newShape.endPoint.y += 0;
+                shapes.back().color = shapes[oldIndex].color;
+                shapes.back().size = shapes[oldIndex].size;
+
+                shapes.back().penTyp = shapes[oldIndex].penTyp;
+                shapes.back().fillshape = true;
+
+                shapes.back().fillcolor = color;
+
+                // shapes.push_back(newShape);
+
+                drawOrder.push_back({DrawingCanvas::DrawRecord::Shape, shapes.size() - 1});
+
                 shapefound = true;
                 break;
                 // wxLogMessage("inside circle");
@@ -44,7 +102,30 @@ void ShapeChecker::CheckClickedShape(const wxPoint &clickedPoint, std::vector<Dr
                 // return &shapes[record.index];
                 // wxLogMessage("inside triangle");
 
-                shape.fillcolor = color;
+                int oldIndex = record.index;
+                DrawingCanvas::ShapeData newShape;
+                // wxLogMessage("inside shapechecker");
+
+                shapes.push_back(newShape);
+                shapes.back().shapeType = "Triangle";
+                // newShape.startPoint = shapeStartPoint;
+                shapes.back().startPoint = shapes[oldIndex].startPoint;
+
+                shapes.back().endPoint = shapes[oldIndex].endPoint;
+                // newShape.endPoint.x += 100;
+                // newShape.endPoint.y += 0;
+                shapes.back().color = shapes[oldIndex].color;
+                shapes.back().size = shapes[oldIndex].size;
+
+                shapes.back().penTyp = shapes[oldIndex].penTyp;
+                shapes.back().fillshape = true;
+
+                shapes.back().fillcolor = color;
+
+                // shapes.push_back(newShape);
+
+                drawOrder.push_back({DrawingCanvas::DrawRecord::Shape, shapes.size() - 1});
+
                 shapefound = true;
                 break;
             }
@@ -54,7 +135,30 @@ void ShapeChecker::CheckClickedShape(const wxPoint &clickedPoint, std::vector<Dr
 
                 // wxLogMessage("inside triangle");
 
-                shape.fillcolor = color;
+                int oldIndex = record.index;
+                DrawingCanvas::ShapeData newShape;
+                // wxLogMessage("inside shapechecker");
+
+                shapes.push_back(newShape);
+                shapes.back().shapeType = "Ellipse";
+                // newShape.startPoint = shapeStartPoint;
+                shapes.back().startPoint = shapes[oldIndex].startPoint;
+
+                shapes.back().endPoint = shapes[oldIndex].endPoint;
+                // newShape.endPoint.x += 100;
+                // newShape.endPoint.y += 0;
+                shapes.back().color = shapes[oldIndex].color;
+                shapes.back().size = shapes[oldIndex].size;
+
+                shapes.back().penTyp = shapes[oldIndex].penTyp;
+                shapes.back().fillshape = true;
+
+                shapes.back().fillcolor = color;
+
+                // shapes.push_back(newShape);
+
+                drawOrder.push_back({DrawingCanvas::DrawRecord::Shape, shapes.size() - 1});
+
                 shapefound = true;
                 break;
             }
@@ -62,14 +166,48 @@ void ShapeChecker::CheckClickedShape(const wxPoint &clickedPoint, std::vector<Dr
             else if (shape.shapeType == "Star" && IsPointInStar(clickedPoint, shape.startPoint, shape.endPoint))
             {
                 // wxLogMessage("inside star");
-                shape.fillcolor = color;
+
+                int oldIndex = record.index;
+                DrawingCanvas::ShapeData newShape;
+                // wxLogMessage("inside shapechecker");
+
+                shapes.push_back(newShape);
+                shapes.back().shapeType = "Star";
+                // newShape.startPoint = shapeStartPoint;
+                shapes.back().startPoint = shapes[oldIndex].startPoint;
+
+                shapes.back().endPoint = shapes[oldIndex].endPoint;
+                // newShape.endPoint.x += 100;
+                // newShape.endPoint.y += 0;
+                shapes.back().color = shapes[oldIndex].color;
+                shapes.back().size = shapes[oldIndex].size;
+
+                shapes.back().penTyp = shapes[oldIndex].penTyp;
+                shapes.back().fillshape = true;
+
+                shapes.back().fillcolor = color;
+
+                // shapes.push_back(newShape);
+
+                drawOrder.push_back({DrawingCanvas::DrawRecord::Shape, shapes.size() - 1});
+
+                // shape.fillcolor = color;
+                // shape.fillshape = true;
                 shapefound = true;
                 break;
             }
         }
     }
     if (shapefound == false)
+    {
+
+        DrawingCanvas::bgcolorstruct bg;
+        bg.bgcolor = color;
+        backcolor.push_back(bg);
+        drawOrder.push_back({DrawingCanvas::DrawRecord::Bgcolor, backcolor.size() - 1});
+
         canvas->SetBackgroundColour(color);
+    }
     // return nullptr; // No shape clicked
 }
 

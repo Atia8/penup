@@ -25,6 +25,13 @@ DrawingCanvas::DrawingCanvas(wxWindow *parent, wxWindowID id, const wxPoint &pos
 void DrawingCanvas::OnPaint(wxPaintEvent &)
 {
     wxAutoBufferedPaintDC dc(this);
+    // if (drawOrder.empty())
+    //     return;
+    // if (squiggles.empty())
+    //     return;
+    // wxPaintDC dc(this);
+
+    // wxAutoBufferedPaintDC dc(this);
 
     dc.Clear();
 
@@ -34,13 +41,16 @@ void DrawingCanvas::OnPaint(wxPaintEvent &)
     {
         for (const auto &record : drawOrder)
         {
-            if (record.type == DrawRecord::Squiggle)
+
+            if (!squiggles.empty() && record.type == DrawRecord::Squiggle)
             {
+
                 const auto &squiggle = squiggles[record.index];
                 wxPen pen = squiggle.penType;
                 if (squiggle.isEraser == true)
                 {
                     pen.SetColour(this->GetBackgroundColour());
+                    pen.SetStyle(wxPENSTYLE_SOLID);
                 }
                 else
                 {
@@ -54,10 +64,12 @@ void DrawingCanvas::OnPaint(wxPaintEvent &)
                     gc->StrokeLines(squiggle.points.size(), squiggle.points.data());
                 }
             }
-            else if (record.type == DrawRecord::Shape)
+            if (record.type == DrawRecord::Shape)
             {
+
                 const auto &shape = shapes[record.index];
-                ShapeDrawer drawer(dc, shape.color, shape.size, shape.fillcolor, shape.penTyp);
+
+                ShapeDrawer drawer(dc, shape.color, shape.size, shape.fillcolor, shape.penTyp, shape.fillshape);
 
                 if (shape.shapeType == "Square")
                 {
@@ -86,74 +98,37 @@ void DrawingCanvas::OnPaint(wxPaintEvent &)
             }
         }
 
-        // for (const auto &shape : shapes)
-        // {
-        //     // Create a ShapeDrawer to draw each shape in the container
-        //     ShapeDrawer drawer(dc, shape.color, shape.size);
-
-        //     if (shape.shapeType == "Square")
-        //     {
-        //         drawer.DrawSquare(shape.startPoint, shape.endPoint);
-        //     }
-        //     else if (shape.shapeType == "Circle")
-        //     {
-        //         drawer.DrawCircle(shape.startPoint, shape.endPoint);
-        //     }
-        //     else if (shape.shapeType == "Line")
-        //     {
-        //         drawer.DrawLine(shape.startPoint, shape.endPoint);
-        //     }
-        //     else if (shape.shapeType == "Triangle")
-        //     {
-        //         drawer.DrawTriangle(shape.startPoint, shape.endPoint);
-        //     }
-        // }
-        // for (const auto &pair : squiggles)
-        // {
-        //     // const auto &pointsVector = pair.first;
-        //     // const auto &color = pair.second;
-
-        //     const auto &points = pair.points;
-        //     const auto &color = pair.color;
-        //     const auto &penType = pair.penType;
-        //     int size = pair.Size;
-
-        //     wxPen pen = pair.penType; // Use the currentPen
-        //                               // wxPen pen = PenManager::GetPen(penType);
-
-        //     pen.SetColour(color);
-        //     pen.SetWidth(size);
-        //     // Set the color of the pen
-        //     // pen.SetStyle(pair.penType);
-        //     gc->SetPen(pen);
-
-        //     // gc->SetPen(wxPen(color, 8));
-        //     if (points.size() > 1)
-        //     {
-        //         gc->StrokeLines(points.size(), points.data());
-        //     }
-        // }
-
+        // this->SetBackgroundColour(newcolor);
         delete gc;
     }
+    // this->SetBackgroundColour(newcolor);
 }
 
 void DrawingCanvas::OnMouseDown(wxMouseEvent &event)
 {
 
-    // if (eraserTool->activestatus() == false)
-    // this->SetCursor(wxCursor(wxCURSOR_DEFAULT)); // Revert to default cursor
     if (fillshape == true)
     {
+        // wxLogMessage("inside fillshape");
         clickedpoint = event.GetPosition();
-        ShapeChecker::CheckClickedShape(clickedpoint, drawOrder, shapes, penColor, this);
+
+        // undoStack.push_back({copydrawOrder, currentBGColor, true});
+        ShapeChecker::CheckClickedShape(clickedpoint, drawOrder, shapes, penColor, this, backcolor);
+
+        // wxLogMessage("size:%zu", drawOrder.size());
+
         Refresh();
+        fillshape = false;
+        fillShape(false);
+        // wxLogMessage("after refresh size:%zu", drawOrder.size());
     }
 
     // ShapeChecker::CheckClickedShape(clickedpoint, drawOrder, shapes);
 
-    if (shapeactive == false)
+    else if ((shapeactive == false))
     {
+        // wxLogMessage("inside squiggle");
+
         squiggles.push_back(Squiggle{{}, penColor, currentPen, penSize});
         if (eraserstatus == true)
         {
@@ -167,13 +142,18 @@ void DrawingCanvas::OnMouseDown(wxMouseEvent &event)
         }
         isDrawing = true;
 
+        // undoStack.push_back({drawOrder, this->GetBackgroundColour(), false});
         drawOrder.push_back({DrawRecord::Squiggle, squiggles.size() - 1});
     }
 
-    if (shapeactive == true)
+    else if (shapeactive == true)
     {
         // shapeStartPoint = event.GetPosition();
+        // wxLogMessage("inside shape");
 
+        squiggle = false;
+
+        shapeCopy = shapes;
         ShapeData newShape;
 
         shapes.push_back(newShape);
@@ -188,32 +168,50 @@ void DrawingCanvas::OnMouseDown(wxMouseEvent &event)
         shapes.back().size = penSize;
 
         shapes.back().penTyp = currentPen;
+        shapes.back().fillshape = false;
         // shapes.push_back(newShape);
-        drawOrder.push_back({DrawRecord::Shape, shapes.size() - 1});
-    }
-}
 
-bool DrawingCanvas::IsPointInSquare(const wxPoint &point, const wxPoint &start, const wxPoint &end)
-{
-    int xMin = std::min(start.x, end.x);
-    int xMax = std::max(start.x, end.x);
-    int yMin = std::min(start.y, end.y);
-    int yMax = std::max(start.y, end.y);
-    return point.x >= xMin && point.x <= xMax && point.y >= yMin && point.y <= yMax;
+        undoStack.push_back({drawOrder, this->GetBackgroundColour(), false});
+
+        drawOrder.push_back({DrawRecord::Shape, shapes.size() - 1});
+        // shapestatus(false);
+        // wxLogMessage("size:%zu", drawOrder.size());
+    }
 }
 
 //}
 
 void DrawingCanvas::OnMouseMove(wxMouseEvent &event)
 {
+
     if (isDrawing && shapeactive == false)
     {
         // wxLogMessage("squiggle");
+
+        if (squiggles.empty())
+        {
+            // No squiggle to update; return early.
+            return;
+        }
         auto pt = event.GetPosition();
         auto &currentSquiggle = squiggles.back().points;
-
         currentSquiggle.push_back(pt);
+
+        // if (currentSquiggle.size() == 1)
+        // {
+        //     if (!squiggles.empty())
+        //     {
+        //         wxLogMessage("After pop_back: squiggles size = %zu", squiggles.size());
+        //         squiggles.pop_back();
+        //         // wxLogMessage("After pop_back: squiggles size = %zu", squiggles.size());
+        //     }
+        //     // squiggles.pop_back();
+        //     if (!drawOrder.empty())
+        //         drawOrder.pop_back();
+        // }
+
         Refresh();
+        //    enablesquiggle(false);
     }
 
     else if (shapeactive == true && event.Dragging())
@@ -234,8 +232,47 @@ void DrawingCanvas::OnMouseMove(wxMouseEvent &event)
 
 void DrawingCanvas::OnMouseUp(wxMouseEvent &)
 {
+
+    // wxColour currentBGColor = this->GetBackgroundColour();
+
+    // if (!undoStack.empty() && undoStack.back().backgroundColor != currentBGColor)
+    // {
+    //     // Only push the background color change if it differs from the previous one
+    //     undoStack.push_back({drawOrder, currentBGColor, true});
+    // }
+    // else
+    //     undoStack.push_back({drawOrder, this->GetBackgroundColour(), false});
+
     isDrawing = false;
-    if ((shapeactive == true) && (!shapes.empty()))
+    if (!shapeactive) // squiggle drawing mode
+    {
+        if (!squiggles.empty())
+        {
+            // Decide if this squiggle was accidental.
+            // Option 1: Check if only one point was recorded.
+            bool accidental = (squiggles.back().points.size() <= 1);
+
+            // Option 2: Or check if the distance moved is below a threshold.
+            // For example, if the distance between the first and last point is less than 5 pixels:
+            // auto &pts = squiggles.back().points;
+            // double dx = pts.back().x - pts.front().x;
+            // double dy = pts.back().y - pts.front().y;
+            // bool accidental = (sqrt(dx*dx + dy*dy) < 5);
+
+            if (accidental)
+            {
+                // Remove the squiggle and its corresponding record.
+                squiggles.pop_back();
+                if (!drawOrder.empty() && drawOrder.back().type == DrawRecord::Squiggle)
+                {
+                    drawOrder.pop_back();
+                }
+            }
+        }
+        Refresh();
+    }
+
+    else if ((shapeactive == true) && (!shapes.empty()))
     {
         // wxAutoBufferedPaintDC dc(this);
 
@@ -245,7 +282,7 @@ void DrawingCanvas::OnMouseUp(wxMouseEvent &)
 
         // Redraw the shape when mouse is up
         ShapeData &currentShape = shapes.back();
-        ShapeDrawer drawer(dc, penColor, penSize, currentShape.fillcolor, currentShape.penTyp);
+        ShapeDrawer drawer(dc, penColor, penSize, currentShape.fillcolor, currentShape.penTyp, currentShape.fillshape);
 
         if (currentShape.shapeType == "Square")
         {
@@ -274,12 +311,17 @@ void DrawingCanvas::OnMouseUp(wxMouseEvent &)
         {
             drawer.DrawStar(currentShape.startPoint, currentShape.endPoint);
         }
+        shapestatus(false);
+
         // shapeactive = false;
     }
+    //  wxLogMessage("size:%zu", drawOrder.size());
 }
 
 void DrawingCanvas::OnMouseLeave(wxMouseEvent &)
 {
+    // wxLogMessage("size:%zu", drawOrder.size());
+
     isDrawing = false;
     // shapeactive = false;
 }
@@ -355,4 +397,67 @@ void DrawingCanvas::fillShape(bool active)
 void DrawingCanvas::eraser(bool active)
 {
     eraserstatus = active;
+}
+
+void DrawingCanvas::Undo()
+{
+
+    // wxLogMessage("size:%zu", drawOrder.size());
+
+    if (!drawOrder.empty())
+    {
+        const DrawRecord &lastRecord = drawOrder.back();
+
+        redo.push_back(lastRecord);
+
+        drawOrder.pop_back();
+        if ((lastRecord.type == DrawRecord::Bgcolor) && !backcolor.empty())
+        {
+
+            redocolor.push_back(backcolor.back());
+            backcolor.pop_back();
+            if (backcolor.empty())
+            {
+                this->SetBackgroundColour(*wxBLACK);
+            }
+            else
+                this->SetBackgroundColour(backcolor.back().bgcolor);
+        }
+    }
+    Refresh();
+}
+
+void DrawingCanvas::Redo()
+{
+
+    // wxLogMessage("size:%zu", redocolor.size());
+
+    if (!redo.empty())
+    {
+        const DrawRecord &lastRecord = redo.back();
+
+        // redo.push(lastRecord);
+        redo.pop_back();
+        drawOrder.push_back(lastRecord);
+        if ((lastRecord.type == DrawRecord::Bgcolor) && !redocolor.empty())
+        {
+            // redocolor.push(backcolor.back());
+            backcolor.push_back(redocolor.back());
+            // redocolor.pop_back();
+            if (redocolor.empty())
+            {
+                this->SetBackgroundColour(*wxBLACK);
+            }
+            else
+                this->SetBackgroundColour(redocolor.back().bgcolor);
+
+            redocolor.pop_back();
+        }
+    }
+    Refresh();
+}
+
+void DrawingCanvas::enablesquiggle(bool active)
+{
+    squiggle = active;
 }

@@ -29,7 +29,7 @@
 class ShapeChecker
 {
 public:
-    static void CheckClickedShape(const wxPoint &clickedPoint, std::vector<DrawingCanvas::DrawRecord> &drawOrder, std::vector<DrawingCanvas::ShapeData> &shapes, const wxColour &color, DrawingCanvas *canvas);
+    static void CheckClickedShape(const wxPoint &clickedPoint, std::vector<DrawingCanvas::DrawRecord> &drawOrder, std::vector<DrawingCanvas::ShapeData> &shapes, const wxColour &color, DrawingCanvas *canvas, std::vector<DrawingCanvas::bgcolorstruct> &backcolor);
 
 private:
     // Shape checking functions for different types

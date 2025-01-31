@@ -4,7 +4,7 @@
 #include <cmath> // For circle radius calculation
 #include "PenManager.h"
 
-ShapeDrawer::ShapeDrawer(wxDC &dc, const wxColour &penColor, int penSize, const wxColour &fillcolor, const wxPen &penType)
+ShapeDrawer::ShapeDrawer(wxDC &dc, const wxColour &penColor, int penSize, const wxColour &fillcolor, const wxPen &penType, bool fillshape)
     : dc(dc), pen(penType)
 // pen(penColor, penSize)
 {
@@ -21,13 +21,23 @@ ShapeDrawer::ShapeDrawer(wxDC &dc, const wxColour &penColor, int penSize, const 
     else
     {
         style = penType.GetStyle();
-        }
+    }
     pen.SetStyle(style);
     dc.SetPen(pen);
-    if (fillcolor == *wxWHITE)             // Set the pen color and size
-        dc.SetBrush(*wxTRANSPARENT_BRUSH); // Set the brush to transparent for no fill
-    else                                   // dc.SetBrush(pen.GetColour());
-        dc.SetBrush(wxBrush(fillcolor));   // Set the brush to the fill color
+
+    if (fillshape == true)
+    {
+        dc.SetBrush(wxBrush(fillcolor));
+    }
+    else
+    {
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    }
+
+    // if (fillcolor == *wxWHITE)             // Set the pen color and size
+    //     dc.SetBrush(*wxTRANSPARENT_BRUSH); // Set the brush to transparent for no fill
+    // else                                   // dc.SetBrush(pen.GetColour());
+    //     dc.SetBrush(wxBrush(fillcolor));   // Set the brush to the fill color
 }
 
 void ShapeDrawer::DrawSquare(const wxPoint &startPoint, const wxPoint &endPoint, const wxColour &fillcolor)

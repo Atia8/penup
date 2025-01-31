@@ -8,7 +8,7 @@ using namespace std;
 class ShapeDrawer
 {
 public:
-    ShapeDrawer(wxDC &dc, const wxColour &penColor, int penSize, const wxColour &fillcolor, const wxPen &penType);
+    ShapeDrawer(wxDC &dc, const wxColour &penColor, int penSize, const wxColour &fillcolor, const wxPen &penType, bool fillshape);
     void DrawSquare(const wxPoint &startPoint, const wxPoint &endPoint, const wxColour &fillcolor);
     void DrawCircle(const wxPoint &startPoint, const wxPoint &endPoint);
     void DrawLine(const wxPoint &startPoint, const wxPoint &endPoint);

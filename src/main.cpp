@@ -184,19 +184,27 @@ wxPanel *MyFrame::BuildControlsPanel(wxWindow *parent)
     dashedButton->SetSize(dashedImage.GetWidth(), dashedImage.GetHeight());
     // Bind events to change pen type
     solidButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
-                      { canvas->SetPenType(PenType::SOLID); });
+                      { canvas->SetPenType(PenType::SOLID);
+                      disablecolorfiller();
+                      canvas->enablesquiggle(true); });
     dashedButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
-                       { canvas->SetPenType(PenType::DASHED); });
+                       { canvas->SetPenType(PenType::DASHED); 
+                         disablecolorfiller();
+                         canvas->enablesquiggle(true); });
     dottedButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
-                       { canvas->SetPenType(PenType::DOTTED); });
+                       { canvas->SetPenType(PenType::DOTTED); 
+                         disablecolorfiller(); });
     brushButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
-                      { canvas->SetPenType(PenType::BRUSH); });
+                      { canvas->SetPenType(PenType::BRUSH);
+                        disablecolorfiller(); });
 
     // new
     customdashButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
-                           { canvas->SetPenType(PenType::CUSTOM_DASH); });
+                           { canvas->SetPenType(PenType::CUSTOM_DASH); 
+                             disablecolorfiller(); });
     redlineButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
-                        { canvas->SetPenType(PenType::THICK_RED_LINE); });
+                        { canvas->SetPenType(PenType::THICK_RED_LINE);
+                          disablecolorfiller(); });
 
     // Add buttons to the sizer
     penTypeSizer->Add(solidButton, 0, wxALL | wxEXPAND, FromDIP(5));
@@ -307,6 +315,44 @@ wxPanel *MyFrame::BuildControlsPanel(wxWindow *parent)
 
     penTypeSizer->Add(fillButton, 0, wxALL | wxEXPAND, FromDIP(5));
 
+    // undo
+
+    wxBoxSizer *undoSizer = new wxWrapSizer(wxHORIZONTAL);
+
+    wxImage undoImage(wxT("image\\undo.png"), wxBITMAP_TYPE_PNG); // Replace with your fill icon
+    undoImage.Rescale(FromDIP(30), FromDIP(30));
+    wxBitmap undoBitmap(undoImage);
+    auto undoButton = new wxBitmapButton(controlsPanel, wxID_ANY, undoBitmap);
+
+    // Bind the button to trigger color fill
+    undoButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
+                     {
+    if (canvas) {
+        canvas->Undo(); // Add this method in your DrawingCanvas class
+    } });
+
+    undoSizer->Add(undoButton, 0, wxALL | wxEXPAND, FromDIP(5));
+
+    // mainSizer->Add(undoButton, 0, wxALL | wxEXPAND, FromDIP(5));
+
+    // redo
+    wxImage redoImage(wxT("image\\redo.png"), wxBITMAP_TYPE_PNG); // Replace with your fill icon
+    redoImage.Rescale(FromDIP(30), FromDIP(30));
+    wxBitmap redoBitmap(redoImage);
+    auto redoButton = new wxBitmapButton(controlsPanel, wxID_ANY, redoBitmap);
+
+    // Bind the button to trigger color fill
+    redoButton->Bind(wxEVT_BUTTON, [this](wxCommandEvent &event)
+                     {
+    if (canvas) {
+        canvas->Redo(); // Add this method in your DrawingCanvas class
+    } });
+
+    undoSizer->Add(redoButton, 0, wxALL | wxEXPAND, FromDIP(5));
+    mainSizer->Add(undoSizer, 0, wxRIGHT | wxBOTTOM, FromDIP(5));
+
+    // mainSizer->Add(redoButton, 0, wxALL | wxEXPAND, FromDIP(5));
+
     controlsPanel->SetSizer(mainSizer);
     controlsPanel->FitInside();
     return controlsPanel;
@@ -336,6 +382,14 @@ MyFrame::MyFrame(const wxString &title, const wxPoint &pos, const wxSize &size)
 
     splitter->SplitVertically(controlsPanel, canvas);
     splitter->SetSashPosition(FromDIP(220)); // initial position of divider. leaves 220 pixels for the left
+
+    // Create a sizer for the frame and add the splitter to it.
+    wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+    sizer->Add(splitter, 1, wxEXPAND); // proportion 1 and expand flag make splitter resize with frame
+
+    // Set the sizer on the frame.
+    this->SetSizer(sizer);
+    this->Layout();
 
     this->SetSize(FromDIP(800), FromDIP(500));      // sets the size of the window
     this->SetMinSize({FromDIP(400), FromDIP(200)}); // min size of window

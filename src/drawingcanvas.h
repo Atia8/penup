@@ -7,6 +7,7 @@
 #include "ShapeToolbar.h"
 #include <string>
 #include "ShapeDrawer.h"
+#include <queue>
 using namespace std;
 
 class Eraser;
@@ -23,17 +24,24 @@ public:
     int GetPenSize();
     bool shapestatus(bool status);
     void SelectedShape(wxString shape);
-    void DrawOnBuffer(std::function<void(wxDC &)> drawFunc);
-    void OnResize(wxSizeEvent &event);
+
     // void eraserActive(bool eraserToolActive);
     //  void setdefaultcursor();
 
     void fillShape(bool active);
 
-    bool IsPointInSquare(const wxPoint &point, const wxPoint &start, const wxPoint &end);
     void eraser(bool active);
+    void Undo();
+    void Redo();
+
+    void enablesquiggle(bool active);
 
 private:
+    // wxColour newcolor = *wxBlack;
+    // wxColour newcolor = wxColour(*wxBLACK);
+
+    bool undo = false, squiggle = false;
+
     bool eraserstatus = false;
 
     bool fillModeActive;
@@ -61,10 +69,14 @@ private:
         int size;           // Size (for lines, pen width)
 
         wxColour fillcolor = *wxWHITE;
-        wxPen penTyp;
-    };
+        // wxColour fillcolor;
 
-    std::vector<ShapeData> shapes;
+        wxPen penTyp;
+
+        bool fillshape = false;
+    };
+    // for eraser to work inside of shape or erase fillcolor usually make shape={} not shapes
+    std::vector<ShapeData> shapes = {}, shapeCopy;
 
     void OnPaint(wxPaintEvent &);
     void OnMouseDown(wxMouseEvent &);
@@ -85,25 +97,54 @@ private:
         // Pen type of the squiggle
     };
 
-    std::vector<Squiggle> squiggles; // Vector of all squiggles
+    std::vector<Squiggle> squiggles, squiggleCopy; // Vector of all squiggles
 
     // std::vector<std::vector<wxPoint2DDouble>> squiggles;
     // std::vector<std::pair<std::vector<wxPoint2DDouble>, wxColour>> squiggles; // Now a vector of pairs
 
+    struct bgcolorstruct
+    {
+        wxColour bgcolor;
+    };
+
+    std::vector<bgcolorstruct> backcolor = {}, redocolor = {};
+
+    // backcolor.push_back(bgcolorstruct{*wxBLACK});
+    // backcolor.push_back(*wxBlack);
     struct DrawRecord
     {
         enum Type
         {
             Squiggle,
-            Shape
+            Shape,
+            Bgcolor
         } type;
         size_t index;
     };
-    std::vector<DrawRecord> drawOrder;
+
+    std::vector<DrawRecord> drawOrder, redo;
+    std::vector<DrawRecord> copydrawOrder, undoorder;
+    // queue<DrawRecord> redo;
+
+    // queue<bgcolorstruct> redocolor;
 
     wxMenu contextMenu;
     void BuildContextMenu();
     void OnContextMenuEvent(wxContextMenuEvent &);
 
     friend class ShapeChecker;
+
+    // undo/redo:
+
+    struct CanvasState
+    {
+        std::vector<DrawRecord> drawOrderundo;
+        wxColour backgroundColor;
+        bool color = false;
+
+        // std::vector<ShapeData> shapeCopy; // Copy shapes separately
+    };
+
+    std::vector<CanvasState> undoStack;
+    std::vector<CanvasState> redoStack;
 };
